@@ -1,11 +1,37 @@
+import threading
 import socket
 
-HOST = "127.0.0.1"  # The server's hostname or IP address
-PORT = 65432  # The port used by the server
+# The input() function allows user input.
+nickname = input('Choose a nickname ')
+# client socket with IPV4 address family , and TCP connetion type
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# The client calls .connect() to establish a connection to the server and initiate the three-way handshake.
+client.connect( ('127.0.0.1' , 55552) )
+# receive the message 
+def receive():
+    while True: # infinite loop
+        try: 
+            message = client.recv(1024).decode('ascii') # client message which will be limited to 1024
+            if message == "NICK": 
+                client.send(nickname.encode('ascii'))
+            else:
+                print(message)
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.connect((HOST, PORT))
-    s.sendall(b"Hello, world")
-    data = s.recv(1024)
+        except:
+            print("An error occurred!")
+            client.close()
+            break
 
-print(f"Received {data!r}")
+
+# client write a message which will be sent to all clients
+def write():
+    while True:
+        message = f'{nickname} : {input("")}' # get that message
+        client.send(message.encode('ascii')) # send that message in ascii format
+
+# start thread with reveive function
+receive_thread = threading.Thread(target=receive)
+receive_thread.start()
+#  start thread with reveive write
+write_thread = threading.Thread(target=write)
+write_thread.start()
